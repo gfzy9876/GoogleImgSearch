@@ -34,6 +34,7 @@ public class GoogleSearchUtils {
         }
     }
 
+    //start search
     public void enqueue(final Callback callback) {
         client.newCall(new Request.Builder()
                 .get()
@@ -95,6 +96,9 @@ public class GoogleSearchUtils {
             this.activityWeakReference = new WeakReference<>(activity);
         }
 
+        /**
+         * @param query something what you want to search
+         * */
         public SearchBuilder query(String query) {
             fieldMap.put(QUERY, query);
             return this;
