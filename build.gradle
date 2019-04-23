@@ -19,6 +19,9 @@ allprojects {
     repositories {
         google()
         jcenter()
+        maven {
+            url '../'
+        }
     }
 }
 
@@ -31,5 +34,5 @@ ext {
     minSdkVersion = 19
     targetSdkVersion = 26
 
-    appCompatV7 = "26.1.0"
+    appCompatV7 = "27.1.0"
 }

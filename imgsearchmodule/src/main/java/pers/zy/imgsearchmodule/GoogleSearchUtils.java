@@ -1,6 +1,10 @@
 package pers.zy.imgsearchmodule;
 
+import android.app.Activity;
+import android.util.Log;
+
 import java.io.IOException;
+import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -19,8 +23,10 @@ public class GoogleSearchUtils {
     public static final String QUERY = "&q=";
     String finalUrl;
     final OkHttpClient client;
+    WeakReference<Activity> activityWeakReference;
 
-    private GoogleSearchUtils(SearchBuilder searchBuilder) {
+    private GoogleSearchUtils(SearchBuilder searchBuilder, Activity activity) {
+        activityWeakReference = new WeakReference<>(activity);
         client = new OkHttpClient.Builder().build();
         finalUrl = "";
         for (String key : searchBuilder.fieldMap.keySet()) {
@@ -32,23 +38,40 @@ public class GoogleSearchUtils {
         client.newCall(new Request.Builder()
                 .get()
                 .url(SEARCH_URL + finalUrl)
+                .header("User-Agent"
+                        , "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/73.0.3683.103 Safari/537.36")
                 .build())
                 .enqueue(new okhttp3.Callback() {
                     @Override
                     public void onFailure(Call call, IOException e) {
                         callback.onFailure(call, e);
+                        Log.d("GFZY", "onFailure: " + e.getMessage());
                     }
 
                     @Override
-                    public void onResponse(Call call, Response response) throws IOException {
+                    public void onResponse(final Call call, Response response) throws IOException {
                         String resStr = response.body().string();
-                        ArrayList<String> imgUrlList = new ArrayList<>();
-                        Pattern pattern = Pattern.compile("(?<=\")+.*?(?=\")");
+                        final ArrayList<String> imgUrlList = new ArrayList<>();
+                        Pattern pattern = Pattern.compile("(?=(https|http))(.*?)(?=\")");
                         Matcher matcher = pattern.matcher(resStr);
                         while (matcher.find()) {
-                            imgUrlList.add(matcher.group());
+                            String group = matcher.group();
+                            if (group.endsWith(".jpg") || group.endsWith(".png")) {
+                                imgUrlList.add(group);
+                                Log.d("GFZY", "onResponse: " + group);
+                            }
                         }
-                        callback.onResponse(call, imgUrlList);
+
+                        activityWeakReference.get().runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                try {
+                                    callback.onResponse(call, imgUrlList);
+                                } catch (IOException e) {
+                                    e.printStackTrace();
+                                }
+                            }
+                        });
                     }
                 });
     }
@@ -56,18 +79,20 @@ public class GoogleSearchUtils {
     public interface Callback {
         void onFailure(Call call, IOException e);
 
-        void onResponse(Call call, List<String> response) throws IOException;
+        void onResponse(Call call, List<String> imgUrlList) throws IOException;
     }
 
     public static class SearchBuilder {
         private Map<String, String> fieldMap;
+        private WeakReference<Activity> activityWeakReference;
 
-        public static SearchBuilder newBuilder() {
-            return new SearchBuilder();
+        public static SearchBuilder newBuilder(Activity activity) {
+            return new SearchBuilder(activity);
         }
 
-        private SearchBuilder() {
+        private SearchBuilder(Activity activity) {
             fieldMap = new HashMap<>();
+            this.activityWeakReference = new WeakReference<>(activity);
         }
 
         public SearchBuilder query(String query) {
@@ -76,7 +101,7 @@ public class GoogleSearchUtils {
         }
 
         public GoogleSearchUtils build() {
-            return new GoogleSearchUtils(this);
+            return new GoogleSearchUtils(this, activityWeakReference.get());
         }
     }
 }
