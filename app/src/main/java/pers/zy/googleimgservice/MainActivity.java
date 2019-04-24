@@ -5,15 +5,10 @@ import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.RecyclerView;
-import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 
-import java.io.IOException;
-import java.util.List;
-
-import okhttp3.Call;
-import pers.zy.imgsearchmodule.GoogleSearchUtils;
+import pers.zy.pixabay.PixabayUtils;
 
 
 public class MainActivity extends AppCompatActivity {
@@ -41,7 +36,10 @@ public class MainActivity extends AppCompatActivity {
         EditText mEdit = findViewById(R.id.img_search_edit);
 
         mSearch.setOnClickListener(v -> {
-            GoogleSearchUtils searchUtils = GoogleSearchUtils.SearchBuilder
+
+            PixabayUtils.search();
+
+            /*GoogleSearchUtils searchUtils = GoogleSearchUtils.SearchBuilder
                     .newBuilder(this)
                     .query(mEdit.getText().toString())
                     .build();
@@ -56,7 +54,7 @@ public class MainActivity extends AppCompatActivity {
                 public void onResponse(Call call, List<String> imgUrlList) throws IOException {
                     imgAdapter.notifyData(imgUrlList);
                 }
-            });
+            });*/
         });
     }
 }

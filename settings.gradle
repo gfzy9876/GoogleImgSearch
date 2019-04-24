@@ -1,1 +1,1 @@
-include ':app', ':imgsearchmodule'
+include ':app', ':imgsearchmodule', ':pixabay'
